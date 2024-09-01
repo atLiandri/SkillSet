@@ -1,6 +1,8 @@
 
 inspired by [this](https://github.com/lxdao-official/MarryMe-Contract/blob/e03dbf19650c4c3974701cc52ced1e9b889add1c/src/MarryMe.sol) marryme contract
+
 Attestation Sign contract : [Attestation.sol](https://github.com/EthSign/sign-protocol-evm/blob/main/src/models/Attestation.sol),  
+
 [An example of interaction with Sign](https://docs.sign.global/for-builders/getting-started/index/building-a-simple-notary-platform) 
 
 ### Main idea:
