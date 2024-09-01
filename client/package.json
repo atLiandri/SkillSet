@@ -1,7 +1,7 @@
 {
-  "name": "next-js-tableland-template",
+  "name": "skillSet",
   "version": "0.0.0",
-  "description": "A JavaScript template for @tableland + NextJS + wagmi + RainbowKit projects",
+  "description": "skillSet",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -17,10 +17,7 @@
     "clean": "rm -rf .next"
   },
   "keywords": [
-    "tableland",
-    "sql",
-    "ethereum",
-    "database"
+    "ethonline2024"
   ],
   "license": "MIT AND Apache-2.0",
   "dependencies": {
