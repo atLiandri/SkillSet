@@ -1,0 +1,9 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@ethsign/sign-protocol-evm": "^1.1.1",
+    "@ethsign/sp-sdk": "^0.7.2",
+    "@nomicfoundation/hardhat-ethers": "^3.0.7",
+    "hardhat": "^2.22.9"
+  }
+}

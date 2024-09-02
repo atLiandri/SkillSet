@@ -1,2 +1,7 @@
-
+artifacts
+node_modules
+client
+cache
+0_bckeypairs.txt
+scripts/mock_deploy_SkillSet.js
 /client/src/pages/api/old
