@@ -62,7 +62,7 @@ export default function Home() {
                 <Button flex="1" onClick={() => setIsTutorialOpen(true)}>
                   Tutorial
                 </Button>
-                <ConnectButton flex="1" isLoading={isSubmitting} onClick={onHustle}/>
+                {/* <ConnectButton flex="1" isLoading={isSubmitting} onClick={onHustle}/> */}
                 <ConnectButton.Custom>
       {({
         account,
