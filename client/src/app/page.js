@@ -1,48 +1,181 @@
+"use client"
+import {
+  Text,
+  VStack,
+  HStack,
+  Divider,
+  Card,
+  Box,
+  Image,
+  Link as ChakraLink,
+} from "@chakra-ui/react";
+import Layout from "@/components/Layout";
+import Button from "@/components/Button";
+import { useRouter } from "next/navigation";
+// import { Alert, Clock } from "@/components/icons";
+// import Leaderboard from "@/components/Leaderboard";
+import { useToast } from "@/hooks/toast";
+import HomeLeftPanel from "@/components/HomeLeftPanel";
+// import Tutorial from "@/components/Tutorial";
+import { useEffect, useState } from "react";
+import { play } from "@/hooks/media";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import Image from "next/image";
-import "./globals.css";
-import Link from 'next/link';
-import ClaimableRewardsButton from "./components/ClaimableRewardsButton"
 
 export default function Home() {
-  return (
-    <>
-       <nav className="sticky top-0 flex items-center justify-between bg-lightgreen opacity-100 shadow p-2 mb-8">
-      {/* Flex container for logo and Dataset Page link */}
-      <div className="flex items-center">
-        <h1 className="text-2xl font-bold mr-4">
-          <Link href="/">
-            
-              <Image
-                src="/favicon.ico"
-                alt="SkillSet Logo"
-                width={50} // Adjust the width as necessary
-                height={50} // Adjust the height as necessary
-                style={{ width: '50px', height: 'auto' }}
-                priority
-              />
-           
-          </Link>
-        </h1>
-        
-        <Link legacyBehavior href="/">
-          <a className="text-lg px-3 py-2px-4 py-2 border-2 border-black bg-white text-black rounded flex-grow mx-2 hover:bg-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200">certificates</a>
-        </Link>
-        <ClaimableRewardsButton/>
-      </div>
-        <div>
-          <ConnectButton />
-        </div>
-      </nav>
-      <main className="flex   h-[calc(90vh-64px)]">
-        <div className="flex-1 flex justify-center items-center border-r-4 border-black bg-white">
-          <a href="/" className="text-6xl font-bold hover:text-8xl transition-all duration-500 ease-in-out">Collect</a>
-        </div>
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGated, setIsGated] = useState(false);
 
-        <div className="flex-1 flex justify-center items-center bg-white">
-          <a href="/" className="text-6xl font-bold hover:text-8xl transition-all duration-500 ease-in-out">Explore</a>
-        </div>
-      </main>
-    </>
+  useEffect(() => setIsGated(false), []);
+
+  const disableAutoPlay = process.env.NEXT_PUBLIC_DISABLE_MEDIAPLAYER_AUTOPLAY === "true";
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  const onHustle = async () => {
+    if (!disableAutoPlay) {
+      play();
+    }
+
+    setIsSubmitting(true);
+    // Navigation logic after hustle action
+    router.push(`/create/new`);
+  };
+
+  return (
+    
+    <Layout CustomLeftPanel={HomeLeftPanel} rigthPanelScrollable={false} rigthPanelMaxH="calc(100vh - 230px)">
+      <VStack boxSize="full" gap="10px" justify="center">
+        <Card variant="pixelated">
+          <HStack w="full" p="20px" gap="10px" justify="center">
+            {isGated ? (
+              <VStack>
+                <HStack>
+                  {/* <Alert /> */}
+                  <Text align="center">Under Construction</Text>
+                </HStack>
+                <Text align="center">Get ready hustlers... Season III starts in November</Text>
+              </VStack>
+            ) : (
+              <>
+               
+                <Button flex="1" onClick={() => setIsTutorialOpen(true)}>
+                  Tutorial
+                </Button>
+                <ConnectButton flex="1" isLoading={isSubmitting} onClick={onHustle}/>
+                <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+        // Note: If your app doesn't use authentication, you
+        // can remove all 'authenticationStatus' checks
+        const ready = mounted && authenticationStatus !== 'loading';
+        const connected =
+          ready &&
+          account &&
+          chain &&
+          (!authenticationStatus ||
+            authenticationStatus === 'authenticated');
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              'style': {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <Button onClick={openConnectModal} type="button">
+                    Connect Wallet
+                  </Button>
+                );
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <Button onClick={openChainModal} type="button">
+                    Wrong network
+                  </Button>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <Button
+                    onClick={openChainModal}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                    type="button"
+                  >
+                    {chain.hasIcon && (
+                      <div
+                        style={{
+                          background: chain.iconBackground,
+                          width: 12,
+                          height: 12,
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                          marginRight: 4,
+                        }}
+                      >
+                        {chain.iconUrl && (
+                          <img
+                            alt={chain.name ?? 'Chain icon'}
+                            src={chain.iconUrl}
+                            style={{ width: 12, height: 12 }}
+                          />
+                        )}
+                      </div>
+                    )}
+                    {chain.name}
+                  </Button>
+
+                  <Button onClick={openAccountModal} type="button">
+                    {account.displayName}
+                    {account.displayBalance
+                      ? ` (${account.displayBalance})`
+                      : ''}
+                  </Button>
+                </div>
+              );
+            })()}
+          </div>
+        );
+      }}
+    </ConnectButton.Custom>
+                <Button flex="1" isLoading={isSubmitting} onClick={onHustle}>
+                
+                </Button>
+              </>
+            )}
+          </HStack>
+        </Card>
+
+        {!isGated && (
+          <VStack
+            boxSize="full"
+            gap="20px"
+            __css={{
+              "scrollbar-width": "none",
+            }}
+          >
+            {/* <Leaderboard /> */}
+          </VStack>
+        )}
+      </VStack>
+
+      {/* <Tutorial isOpen={isTutorialOpen} close={() => setIsTutorialOpen(false)} /> */}
+    </Layout>
   );
 }
