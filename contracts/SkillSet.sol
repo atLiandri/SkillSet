@@ -5,15 +5,10 @@ pragma solidity ^0.8.20;
 /// @author Liandri
 /// @notice Tags not yet implemented, for the moment only registering certificates is possible, only via proposal
 
-// Indexes are currently required to retrieve proposals and certificates via view functions, and also to confirm proposals
-// Indexes are emitted when 
-
-// currently deployed on sepolia
-
 // TODO 
 // implement invalidate proposal, implement create certificate (without need to confirm)
 // extend the view functions to all variables
-// add tags to the certificate -- create a custom schema
+// add tags to the certificate
 // optional: implement ERC20 request for certificate
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
