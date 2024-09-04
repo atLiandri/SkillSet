@@ -1,0 +1,12 @@
+import { Icon, IconProps } from ".";
+
+export const User = (props: IconProps) => {
+  return (
+    <Icon viewBox="0 0 24 24" {...props}>
+      <path
+        d="M8.49999 13.6667L10.8333 13.6667V12.5H9.66671V11.3333H8.49999V7.83334H9.66671V6.66672H10.8333V5.5H13.1667V6.66672H14.3333V7.83334H15.5V11.3333H14.3333V12.5H13.1667V13.6667H15.5V14.8334H16.6666V17.1667H17.8333V19.5H6.16675V17.1667H7.33337V14.8334H8.49999V13.6667Z"
+        fill="currentColor"
+      />
+    </Icon>
+  );
+};
