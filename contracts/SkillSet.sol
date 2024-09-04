@@ -26,22 +26,30 @@ contract SkillSet is Ownable {
     ISP public spInstance;
     uint64 public schemaId;
 
-    struct Proposal {
+    struct SkillProposal {
         string info;
+        uint256 level;
+        uint256 maximumLevel;
         bool isValid;
     }
 
-    //Mapping from addresses to received certificates IDs
-    mapping(address => uint64[]) public addressToReceivedCertificates;
-    //Mapping from addresses to issued certificates IDs
-    mapping(address => uint64[]) public addressToIssuedCertificates;
-    //Mapping from attestationId to tag
-    mapping(uint64 => string[]) public attestationIdToTag; // not yet used
+    struct ProposalBookmark{ // used to retrieve a proposal
+        uint256 index;
+        address issuerAddress;
+    }
 
-    // Mapping from proposer to an array of all proposees
-    mapping(address => Proposal[]) private proposeeToReceivedProposals;
-    // Mapping from proposee to an array of all proposers
-    mapping(address => Proposal[]) private proposerToSentProposals;
+    //Mapping from addresses to received certificates IDs
+    mapping(address => uint256[]) public addressToReceivedCertificates;
+    //Mapping from addresses to issued certificates IDs
+    mapping(address => uint256[]) public addressToIssuedCertificates;
+    //Mapping from attestationId to tag
+    mapping(uint256 => string[]) public attestationIdToTag; // not yet used
+
+
+    // Mapping from proposer to sent proposals
+    mapping(address => SkillProposal[]) private proposerToSentProposals;
+    // Mapping from proposer to an array of bookmarks that allow to retrieve information from the map above
+    mapping(address => ProposalBookmark[]) private proposeeToReceivedProposalIndices;
 
 
     event CertificationRegistered(address addressIssuer, address addressReceiver, uint256 issuerCertificateIndex, uint256 receiverCertificateIndex,  uint64 attestationId);
@@ -50,27 +58,33 @@ contract SkillSet is Ownable {
     constructor() Ownable(_msgSender()) { }
 
     function setSPInstance(address instance) external onlyOwner {
-        spInstance = ISP(instance);
+        spInstance = ISP(instance); // to be set to 0x878c92FD89d8E0B93Dc0a3c907A2adc7577e39c5 
     }
 
     function setSchemaID(uint64 schemaId_) external onlyOwner {
-        schemaId = schemaId_;
+        schemaId = schemaId_;      // to be set to 0xa8 (skill schema) https://testnet-scan.sign.global/schema/onchain_evm_11155111_0xa8
     }
 
-    function submitCertificateProposal(address addressReceiver, string memory infoA) external {
+    function submitCertificateProposal(address addressReceiver,uint256 _level, uint256 _maximumLevel, string memory infoA) external {
+        // sumbits a skill proposal that can later be accepted by receiver address
         address addressIssuer = _msgSender();
-        Proposal memory _proposal = Proposal({info: infoA, isValid:true});
+        SkillProposal memory _proposal = SkillProposal({info: infoA,level:_level,maximumLevel:_maximumLevel, isValid:true});
         proposerToSentProposals[addressIssuer].push(_proposal);
-        proposeeToReceivedProposals[addressReceiver].push(_proposal); 
+        uint256 proposalIndex = proposerToSentProposals[addressIssuer].length-1;
+        ProposalBookmark memory _proposalBookmark = ProposalBookmark({
+            index: proposalIndex,
+            issuerAddress: addressIssuer});
+        proposeeToReceivedProposalIndices[addressReceiver].push(_proposalBookmark); 
 
         emit ProposalSubmitted( addressIssuer,
                                 addressReceiver,
-                                proposerToSentProposals[addressIssuer].length-1,
-                                proposeeToReceivedProposals[addressReceiver].length-1);
+                                proposalIndex,
+                                proposeeToReceivedProposalIndices[addressReceiver].length-1);
     }
 
 
-    function getProposalsSentBy(address proposer) external view returns (string[] memory) {
+    function getAllProposalsSentBy(address proposer) external view returns (string[] memory) {
+        // get the array of the info attached to all proposals sent by proposer
         uint256 length = proposerToSentProposals[proposer].length;
         string[] memory infos = new string[](length);
 
@@ -81,28 +95,36 @@ contract SkillSet is Ownable {
         return infos;
     }
 
-    function getProposalsReceivedBy(address proposee) external view returns (string[] memory) {
-        uint256 length = proposeeToReceivedProposals[proposee].length;
-        string[] memory infos = new string[](length);
-
+    function getProposalsReceivedBy(address proposee) external view returns (address[] memory, uint256[] memory) {
+        // get array of all the issuers that have sent a proposal to proposee, together with
+        // an index array that allows to retrieve the right proposal from 
+        // the output of getAllProposalsSentBy
+        uint256 length = proposeeToReceivedProposalIndices[proposee].length;
+        uint256[] memory indices = new uint256[](length);
+        address[] memory issuers = new address[](length);
         for (uint256 i = 0; i < length; ++i) {
-            infos[i] = proposeeToReceivedProposals[proposee][i].info;
+            indices[i] = proposeeToReceivedProposalIndices[proposee][i].index;
+            issuers[i] = proposeeToReceivedProposalIndices[proposee][i].issuerAddress;
         }
 
-        return infos;
+        return (issuers, indices);
     }
 
 
-    function confirmProposal(address addressIssuer, uint64 indexProposee, uint64 indexProposer) external returns (uint64) {
+    function confirmProposal(uint256 indexProposee) external returns (uint256) {
+        // transforms a proposal into a certificate. Only requires an index that selects
+        // among the proposals received by msgSender, and then looks for the full proposal
+        // in proposerToSentProposals
         address addressReceiver = _msgSender();
 
-        Proposal memory _proposalReceived = proposeeToReceivedProposals[addressReceiver][indexProposee];
-        Proposal memory _proposalIssued = proposerToSentProposals[addressIssuer][indexProposer];
+        uint256 index = proposeeToReceivedProposalIndices[addressReceiver][indexProposee].index;
+        address addressIssuer = proposeeToReceivedProposalIndices[addressReceiver][indexProposee].issuerAddress;
 
-        require(_proposalReceived.isValid, "Proposal not found at the receiver, or invalid");
-        require(_proposalIssued.isValid, "Proposal not found at the issuer, or invalid");
+        SkillProposal memory _proposal = proposerToSentProposals[addressIssuer][index];
 
-        bytes memory data = abi.encode(addressIssuer, addressReceiver, _proposalReceived.info);
+        require(_proposal.isValid, "SkillProposal not found at the receiver, or invalid");
+
+        bytes memory data = abi.encode(addressIssuer, addressReceiver,_proposal.level, _proposal.maximumLevel, _proposal.info);
 
         bytes[] memory recipients = new bytes[](2);
         recipients[0] = abi.encode(addressIssuer);
@@ -121,7 +143,6 @@ contract SkillSet is Ownable {
         });
         uint64 attestationId = spInstance.attest(a, "", "", "");
 
-        // mapping(address => uint64) public attestationIdMapping;
         addressToReceivedCertificates[addressReceiver].push(attestationId);
         addressToIssuedCertificates[addressIssuer].push(attestationId);
 
