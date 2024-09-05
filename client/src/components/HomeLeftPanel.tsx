@@ -26,12 +26,12 @@ const floatAnim = keyframes`
 const steps = [
   {
     step: 1,
-    title: "Step 1",
+    title: "collect certificates ",
     desc: "A short description of this step, maybe one to two sentences. Here is one.",
   },
   {
     step: 2,
-    title: "Step 2",
+    title: "explore your network",
     desc: "A short description of this step, maybe one to two sentences. Here is one.",
   },
   {
@@ -59,7 +59,7 @@ const HomeStep = ({
       >
         <Image
           src={`/images/landing/step${step.step}.png`}
-          alt={`step${step.step}`}
+          alt={`step${step.step} image`}
           w="42%"
         />
 
@@ -67,7 +67,7 @@ const HomeStep = ({
           <HStack>
             <Image
               src={`/images/landing/step${step.step}-icon.png`}
-              alt={`step${step.step}`}
+              alt={`step${step.step} image`}
               w="92px"
             />
             <VStack alignItems="flex-start">
@@ -127,7 +127,7 @@ const HomeLeftPanel = () => {
       >
         <VStack zIndex="2">
           <Text textStyle="subheading" fontSize="11px">
-            Skill Sits
+            Skill Sets
           </Text>
           <Heading fontSize={["36px", "48px"]} fontWeight="normal">
             on chain certifications 
@@ -136,7 +136,7 @@ const HomeLeftPanel = () => {
 
         <VStack position="relative" top="-110px" display={["none", "flex"]}>
           <Image
-            src={"/images/landing/main2.png"}
+            src={"/images/landing/main3.png"}
             maxH="75vh"
             display={["none", "block"]}
             alt="context"
@@ -168,8 +168,12 @@ const HomeLeftPanel = () => {
               variant="pixelated"
               px="5"
             >
+              <Text px="2" fontSize="xl">
+              BUILT
+              </Text>
+                 
               <ChakraLink
-                href=""
+                href="https://github.com/atLiandri/"
                 target="_blank"
                 display="flex"
                 justifyContent="center"
@@ -179,14 +183,14 @@ const HomeLeftPanel = () => {
                   color: "cartridgeYellow",
                 }}
               >
-                BUILT BY <Cartridge ml="2" />
+                BY atLiandri
               </ChakraLink>
 
               <Text px="2" fontSize="xl">
-                |
+                and
               </Text>
               <ChakraLink
-                href=""
+                href="https://github.com/malawadd/"
                 target="_blank"
                 display="flex"
                 justifyContent="center"
@@ -196,7 +200,7 @@ const HomeLeftPanel = () => {
                   color: "dojoRed",
                 }}
               >
-                BUILT WITH <Dojo ml="2" />
+                By malawadd
               </ChakraLink>
             </Card>
           </HStack>
