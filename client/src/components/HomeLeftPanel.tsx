@@ -134,9 +134,9 @@ const HomeLeftPanel = () => {
           </Heading>
         </VStack>
 
-        <VStack position="relative" top="-160px" display={["none", "flex"]}>
+        <VStack position="relative" top="-110px" display={["none", "flex"]}>
           <Image
-            src={"/images/landing/main.png"}
+            src={"/images/landing/main2.png"}
             maxH="75vh"
             display={["none", "block"]}
             alt="context"
