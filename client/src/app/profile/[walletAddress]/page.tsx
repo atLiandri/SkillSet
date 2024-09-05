@@ -12,15 +12,17 @@ import {
   ListItem,
   Box,
   Link as ChakraLink,
+  Input, // Import Input for search bar
 } from '@chakra-ui/react';
-import Layout from "@/components/Layout";
-import { Footer } from "@/components/Footer";
-import Button from "@/components/Button";
+import Layout from "../../../components/Layout";
+import { Footer } from "../../../components/Footer";
+import Button from "../../../components/Button";
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
-import { Bag, DollarBag, Event, Clock } from "@/components/icons";
-import { ProfileButton } from "@/components/ProfileButton";  // Import Profile component
-
+import { Bag, DollarBag, Event, Clock } from "../../../components/icons";
+import { ProfileButton } from "../../../components/ProfileButton";  // Import Profile component
+import { useAccount } from 'wagmi'; // Import useAccount for connected wallet
+import { useToast } from "@/hooks/toast";
 // Group attestations by date
 const groupAttestationsByDate = (attestations) => {
     const grouped = {};
@@ -48,8 +50,7 @@ const getSkillLevelDescription = (totalInteractions) => {
     if (totalInteractions <= 80) return { level: "Master Craftsman", description: "Shaping brilliance with skill." };
     if (totalInteractions <= 90) return { level: "Skill Sage", description: "Wisdom in every move." };
     return { level: "Ultimate Polymath", description: "Master of infinite possibility." };
-  };
-  
+};
 
 // Line component for individual attestations
 const Line = ({ icon, text, link, color = "neon.400", iconColor = "neon.400" }) => {
@@ -80,11 +81,38 @@ export default function ProfilePage({ params }) {
   const [attestations, setAttestations] = useState([]);
   const [attestedCount, setAttestedCount] = useState(0); // For counting attestations created
   const [receivedCount, setReceivedCount] = useState(0); // For counting attestations received
+  const { address } = useAccount(); // Connected wallet address
+  const [searchQuery, setSearchQuery] = useState(''); // State for search query
+  const [searchProfile, setSearchProfile] = useState('');
   const router = useRouter();
   const listRef = useRef(null);
+  const { toast } = useToast();
 
   // Validate the wallet address format
   const isValidAddress = /^0x[a-fA-F0-9]{40}$/.test(walletAddress);
+
+  // Filter function for search
+  const handleSearch = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (/^0x[a-fA-F0-9]{40}$/.test(searchProfile)) {
+        router.push(`/profile/${searchProfile}`);
+      } else {
+        toast({
+            message: "Please enter a valid Ethereum address.",
+            isError: true
+          });
+      }
+    }
+  };
+
+  // Filter attestations based on search query
+  const filteredAttestations = attestations.filter(attestation =>
+    attestation.attestationId.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,12 +161,11 @@ export default function ProfilePage({ params }) {
     notFound();
   }
 
-  const groupedAttestations = groupAttestationsByDate(attestations);
-  
+  const groupedAttestations = groupAttestationsByDate(filteredAttestations);
 
   return (
+    
     <Layout
-      // Pass the wallet info and attestation counts to CustomLeftPanel
       CustomLeftPanel={() => (
         <CustomLeftPanel
           walletAddress={walletAddress}
@@ -158,11 +185,22 @@ export default function ProfilePage({ params }) {
         </Footer>
       }
     >
+      {/* Render search bar only if the connected wallet is different from the page wallet */}
+      {address?.toLowerCase() !== walletAddress.toLowerCase() && (
+        <Box w="full" mb={4} p={4}>
+          <Input
+            placeholder="Search profile by wallet address..."
+            value={searchProfile}
+            onChange={(e) => setSearchProfile(e.target.value)}
+            onKeyDown={handleKeyDown} // Search when Enter is pressed
+          />
+        </Box>
+      )}
+
       <VStack w="full" align="start" spacing={4} ref={listRef} p={4}>
         <Heading size="lg">Interaction History</Heading>
-        {/* <Text>Wallet Address: {walletAddress}</Text> */}
 
-        {attestations.length > 0 ? (
+        {filteredAttestations.length > 0 ? (
           <List w="full">
             {Object.keys(groupedAttestations).map(date => (
               <VStack key={date} align="start" spacing={2} w="full">
@@ -201,7 +239,7 @@ export default function ProfilePage({ params }) {
 
 // CustomLeftPanel with Profile Component
 const CustomLeftPanel = ({ walletAddress, attestedCount, receivedCount }) => {
-    const totalInteractions = attestedCount + receivedCount;  // Total number of interactions
+  const totalInteractions = attestedCount + receivedCount;  // Total number of interactions
   const { level, description } = getSkillLevelDescription(totalInteractions);  // Determine the skill level and description
 
   return (

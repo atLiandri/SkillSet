@@ -1,5 +1,5 @@
 import { HStack, ButtonProps, StyleProps, Box } from "@chakra-ui/react";
-import Button from "@/components/Button";
+// import Button from "@/components/Button";
 import { ReactNode } from "react";
 
 export const Footer = ({

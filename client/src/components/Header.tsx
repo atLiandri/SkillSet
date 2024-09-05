@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { IsMobile, formatCashHeader } from "@/utils/ui";
 import { useRouter } from "next/navigation";
 import { initSoundStore } from "@/hooks/sound";
-import HeaderButton from "@/components/HeaderButton";
-import PixelatedBorderImage from "./icons/PixelatedBorderImage";
-import colors from "@/theme/colors";
-import { headerStyles, headerButtonStyles } from "@/theme/styles";
+// import HeaderButton from "@/components/HeaderButton";
+// import PixelatedBorderImage from "./icons/PixelatedBorderImage";
+// import colors from "@/theme/colors";
+// import { headerStyles, headerButtonStyles } from "@/theme/styles";
 
 export const Header = ({ back }) => {
   const router = useRouter();

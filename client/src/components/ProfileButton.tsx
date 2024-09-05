@@ -7,10 +7,10 @@ import {
   Heading,
   Box,
 } from "@chakra-ui/react";
-import Button from "@/components/Button";
+import Button from "./Button";
 import {Avatar} from "./Avatar";
 import { Calendar, Cigarette } from "./icons/archive"; 
-import { useToast } from "@/hooks/toast";
+import { useToast } from "../hooks/toast";
 import { useAccount, useEnsName } from 'wagmi';
 import { mainnet } from 'wagmi/chains'
 

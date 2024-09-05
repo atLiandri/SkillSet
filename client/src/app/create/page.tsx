@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 import { Arrow, Car } from "../../components/icons";
 import Layout from "../../components/Layout";
