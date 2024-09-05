@@ -7,71 +7,55 @@ import {
   Button,
   ListItem,
   ListProps,
-  Modal,
-  ModalOverlay,
-  useDisclosure,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   VStack,
 } from "@chakra-ui/react";
-import Input from "@/components/Input";
 
+import { IndexService } from '@ethsign/sp-sdk';
 import React, { useState, useEffect, useRef } from "react";
 import colors from "@/theme/colors";
 import { Arrow, Skull } from "./icons";
-// import Countdown from "react-countdown";
 import { formatCash } from "@/utils/ui";
 
-const renderer = ({ days, hours, minutes, seconds, completed }) => {
-  if (completed) {
-    return <Text>RESETS NEXT GAME</Text>;
-  } else {
-    if (Number.isNaN(days)) {
-      days = 4;
-      hours = 20;
-      minutes = 4;
-      seconds = 20;
-    }
-    return (
-      <HStack textStyle="subheading" fontSize="12px">
-        <Text color="neon.500">RESETS IN:</Text>
-        <Text>
-          {days > 0 ? `${days}D` : ""} {hours.toString().padStart(2, "0")}H {minutes.toString().padStart(2, "0")}m{" "}
-          {seconds.toString().padStart(2, "0")}s
-        </Text>
-      </HStack>
-    );
-  }
+const getAttestationListFromIndexService = async () => {
+  const indexService = new IndexService("testnet");
+  const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0xa9", page: 1 });
+  return res.rows;
 };
+
+const ITEMS_PER_PAGE = 5;
 
 const Leaderboard = ({ nameEntry, ...props }) => {
   const [currentVersion, setCurrentVersion] = useState(1);
   const [selectedVersion, setSelectedVersion] = useState(1);
   const [scores, setScores] = useState([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const [visibleScores, setVisibleScores] = useState([]);
+  const [page, setPage] = useState(1);
 
   const listRef = useRef(null);
 
   useEffect(() => {
-    // Dummy data for scores
-    const dummyScores = [
-      { gameId: 'game1', playerId: '0x538cFD76c', cash: 5000, name: '0x538cFD76c', dead: false },
-      { gameId: 'game2', playerId: '0x538cFD76c', cash: 3000, name: '0x538cFD76c', dead: false },
-      { gameId: 'game3', playerId: '0x538cFD76c', cash: 7000, name: '0x538cFD76c', dead: false },
-    ];
-    setScores(dummyScores);
-    setHasNextPage(true);
+    const fetchData = async () => {
+      const attestationData = await getAttestationListFromIndexService();
+      setScores(attestationData);
+      setVisibleScores(attestationData.slice(0, ITEMS_PER_PAGE)); // Initially load first 5
+    };
+    fetchData();
   }, []);
 
-  const onPrev = async () => {
+  const loadMore = () => {
+    const newPage = page + 1;
+    const newVisibleScores = scores.slice(0, newPage * ITEMS_PER_PAGE);
+    setVisibleScores(newVisibleScores);
+    setPage(newPage);
+  };
+
+  const onPrev = () => {
     if (selectedVersion > 1) {
       setSelectedVersion(selectedVersion - 1);
     }
   };
 
-  const onNext = async () => {
+  const onNext = () => {
     if (selectedVersion < currentVersion) {
       setSelectedVersion(selectedVersion + 1);
     }
@@ -97,10 +81,8 @@ const Leaderboard = ({ nameEntry, ...props }) => {
             onClick={onNext}
           />
         </HStack>
-        {/* {selectedVersion === currentVersion && (
-          <Countdown date={Date.now() + 1000000000} renderer={renderer} />
-        )} */}
       </VStack>
+
       <VStack
         boxSize="full"
         gap="20px"
@@ -113,15 +95,17 @@ const Leaderboard = ({ nameEntry, ...props }) => {
         }}
       >
         <UnorderedList boxSize="full" variant="dotted" h="auto" ref={listRef}>
-          {scores && scores.length > 0 ? (
-            scores.map((score, index) => {
-              const isOwn = false; // No account check for now
-              const color = isOwn ? colors.yellow["400"].toString() : colors.neon["200"].toString();
-              const avatarColor = isOwn ? "yellow" : "green";
-              const displayName = score.name ? `${score.name}${isOwn ? " (you)" : ""}` : "Anonymous";
+          {visibleScores && visibleScores.length > 0 ? (
+            visibleScores.map((score, index) => {
+              const playerName = score.attester.slice(0, 10); // First 10 letters of attester
+              const money = score.attestationId; // Use attestationId as money
+              const link = `https://testnet-scan.sign.global/attestation/${score.id}`; // Link to attestation
+
+              const color = colors.neon["200"].toString();
+              const avatarColor = "green"; // Set a fixed avatar color for simplicity
 
               return (
-                <ListItem color={color} key={score.gameId}>
+                <ListItem color={color} key={score.id}>
                   <HStack mr={3}>
                     <Text w={["10px", "30px"]} fontSize={["10px", "16px"]} flexShrink={0}>
                       {index + 1}.
@@ -135,7 +119,9 @@ const Leaderboard = ({ nameEntry, ...props }) => {
                     </Box>
                     <HStack>
                       <Text flexShrink={0} maxWidth={["150px", "350px"]} whiteSpace="nowrap" overflow="hidden" fontSize={["12px", "16px"]}>
-                        {displayName}
+                        <a href={link} target="_blank" rel="noopener noreferrer">
+                          {playerName}
+                        </a>
                       </Text>
                     </HStack>
                     <Text
@@ -149,7 +135,7 @@ const Leaderboard = ({ nameEntry, ...props }) => {
                       {"."}
                     </Text>
                     <Text flexShrink={0} fontSize={["12px", "16px"]}>
-                      {formatCash(score.cash)}
+                      {money}
                     </Text>
                   </HStack>
                 </ListItem>
@@ -157,14 +143,14 @@ const Leaderboard = ({ nameEntry, ...props }) => {
             })
           ) : (
             <Text textAlign="center" color="neon.500">
-              No scores submitted yet
+              No attestations found
             </Text>
           )}
         </UnorderedList>
       </VStack>
 
-      {hasNextPage && (
-        <Button minH="40px" variant="pixelated" onClick={() => setHasNextPage(false)}>
+      {visibleScores.length < scores.length && (
+        <Button minH="40px" variant="pixelated" onClick={loadMore}>
           Load More
         </Button>
       )}
