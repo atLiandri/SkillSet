@@ -59,8 +59,17 @@ export default function Home() {
             ) : (
               <>
                
-                <Button flex="1" onClick={() => setIsTutorialOpen(true)}>
+                {/* <Button flex="1" onClick={() => setIsTutorialOpen(true)}>
                   Tutorial
+                </Button> */}
+
+                <Button
+                  flex="1"
+                  onClick={() =>
+                    router.push('/profile/0x2807672107982C224F4cEf629E7AB9aabb79aC9A')
+                  }
+                >
+                  Explorer
                 </Button>
                 {/* <ConnectButton flex="1" isLoading={isSubmitting} onClick={onHustle}/> */}
                 <ConnectButton.Custom>
