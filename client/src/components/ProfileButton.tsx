@@ -8,6 +8,7 @@ import {
   Box,
 } from "@chakra-ui/react";
 import Button from "@/components/Button";
+import {Avatar} from "./Avatar";
 import { Calendar, Cigarette } from "./icons/archive"; 
 import { useToast } from "@/hooks/toast";
 import { useAccount, useEnsName } from 'wagmi';
@@ -56,7 +57,7 @@ export const ProfileButton = ({ walletAddress, attestedCount, receivedCount, ...
           <VStack w="full">
             <HStack w="full" fontSize="14px">
               <Card w="100px" alignItems="center">
-                {/* Add an avatar or icon if needed */}
+              <Avatar  color={isSameAddress ? "yellow" : "green"}  hasCrown={isSameAddress ? true : false}  w="100px" h="100px"/>
               </Card>
               <Card flex={2}>
                 <HStack h="50px" px="10px">
