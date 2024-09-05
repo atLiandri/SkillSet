@@ -36,6 +36,21 @@ const groupAttestationsByDate = (attestations) => {
     return grouped;
 };
 
+const getSkillLevelDescription = (totalInteractions) => {
+    if (totalInteractions == 0) return { level: "Blank Slate", description: "Expert at absolutely nothing!" };
+    if (totalInteractions <= 10) return { level: "Skill Seedling", description: "The journey begins." };
+    if (totalInteractions <= 20) return { level: "Apprentice Adventurer", description: "Unlocking new potential." };
+    if (totalInteractions <= 30) return { level: "Curious Wanderer", description: "Boundless curiosity ahead." };
+    if (totalInteractions <= 40) return { level: "Skill Scout", description: "Discovering hidden talents." };
+    if (totalInteractions <= 50) return { level: "Rising Talent", description: "On the path to greatness." };
+    if (totalInteractions <= 60) return { level: "Jack/Jill of Trades", description: "A versatile force." };
+    if (totalInteractions <= 70) return { level: "Proficient Pathfinder", description: "Forging new horizons." };
+    if (totalInteractions <= 80) return { level: "Master Craftsman", description: "Shaping brilliance with skill." };
+    if (totalInteractions <= 90) return { level: "Skill Sage", description: "Wisdom in every move." };
+    return { level: "Ultimate Polymath", description: "Master of infinite possibility." };
+  };
+  
+
 // Line component for individual attestations
 const Line = ({ icon, text, link, color = "neon.400", iconColor = "neon.400" }) => {
   return (
@@ -119,6 +134,7 @@ export default function ProfilePage({ params }) {
   }
 
   const groupedAttestations = groupAttestationsByDate(attestations);
+  
 
   return (
     <Layout
@@ -185,10 +201,13 @@ export default function ProfilePage({ params }) {
 
 // CustomLeftPanel with Profile Component
 const CustomLeftPanel = ({ walletAddress, attestedCount, receivedCount }) => {
+    const totalInteractions = attestedCount + receivedCount;  // Total number of interactions
+  const { level, description } = getSkillLevelDescription(totalInteractions);  // Determine the skill level and description
+
   return (
     <VStack w="full" h="full" justifyContent="center" alignItems="center" flex="1">
       <Heading fontSize={["36px", "48px"]} fontWeight="400" mb={["0px", "20px"]}>
-        Profile
+      {level}
       </Heading>
       {/* Profile component showing wallet address and attestation stats */}
       <ProfileButton

@@ -21,13 +21,31 @@ const formatWalletAddress = (walletAddress) => {
   return `${firstPart}...${lastPart}`;
 };
 
+// Helper function to determine skill level and description
+const getSkillLevelDescription = (totalInteractions) => {
+  if (totalInteractions == 0) return { level: "Blank Slate", description: "Expert at absolutely nothing!" };
+  if (totalInteractions <= 10) return { level: "Skill Seedling", description: "The journey begins." };
+  if (totalInteractions <= 20) return { level: "Apprentice Adventurer", description: "Unlocking new potential." };
+  if (totalInteractions <= 30) return { level: "Curious Wanderer", description: "Boundless curiosity ahead." };
+  if (totalInteractions <= 40) return { level: "Skill Scout", description: "Discovering hidden talents." };
+  if (totalInteractions <= 50) return { level: "Rising Talent", description: "On the path to greatness." };
+  if (totalInteractions <= 60) return { level: "Jack/Jill of Trades", description: "A versatile force." };
+  if (totalInteractions <= 70) return { level: "Proficient Pathfinder", description: "Forging new horizons." };
+  if (totalInteractions <= 80) return { level: "Master Craftsman", description: "Shaping brilliance with skill." };
+  if (totalInteractions <= 90) return { level: "Skill Sage", description: "Wisdom in every move." };
+  return { level: "Ultimate Polymath", description: "Master of infinite possibility." };
+};
+
 // Profile component that uses wallet address and attestation counts
 export const ProfileButton = ({ walletAddress, attestedCount, receivedCount, ...props }) => {
   console.log(walletAddress)
   const { address } = useAccount();  // Get the connected wallet address
   const {  data: ensName } = useEnsName({ address: walletAddress , chainId: mainnet.id , universalResolverAddress: '0x74E20Bd2A1fE0cdbe45b9A1d89cb7e0a45b36376' });  // Get the ENS name for the wallet address
   const { toast } = useToast();
-  console.log("ensName", ensName)
+  
+  const totalInteractions = attestedCount + receivedCount;  // Total number of interactions
+  const { level, description } = getSkillLevelDescription(totalInteractions);  // Determine the skill level and description
+
 
   const isSameAddress = address?.toLowerCase() === walletAddress.toLowerCase();  // Check if the connected account matches the profile's wallet address
 
@@ -56,7 +74,7 @@ export const ProfileButton = ({ walletAddress, attestedCount, receivedCount, ...
                   borderColor="neon.600"
                 />
                 <HStack h="50px" px="10px">
-                  <Cigarette /> <Text>Profile</Text> {/* Static profile description */}
+                <Cigarette /> <Text>{description}</Text>
                 </HStack>
               </Card>
             </HStack>
