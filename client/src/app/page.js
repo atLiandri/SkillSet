@@ -13,7 +13,7 @@ import Layout from "@/components/Layout";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 // import { Alert, Clock } from "@/components/icons";
-// import Leaderboard from "@/components/Leaderboard";
+import Leaderboard from "@/components/Leaderboard";
 import { useToast } from "@/hooks/toast";
 import HomeLeftPanel from "@/components/HomeLeftPanel";
 // import Tutorial from "@/components/Tutorial";
@@ -170,7 +170,7 @@ export default function Home() {
               "scrollbar-width": "none",
             }}
           >
-            {/* <Leaderboard /> */}
+            <Leaderboard />
           </VStack>
         )}
       </VStack>
