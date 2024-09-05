@@ -12,40 +12,39 @@ import {
   ListItem,
   Box,
   Link as ChakraLink,
-  Tooltip,
 } from '@chakra-ui/react';
 import Layout from "@/components/Layout";
 import { Footer } from "@/components/Footer";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
+import { Bag, DollarBag, Event, Clock } from "@/components/icons";
+import { ProfileButton } from "@/components/ProfileButton";  // Import Profile component
 
-// Icons (You can replace these with actual icon components)
-import { FaCheckCircle, FaInbox } from 'react-icons/fa';
-import { Bag, DollarBag, Event } from "@/components/icons";
+// Group attestations by date
+const groupAttestationsByDate = (attestations) => {
+    const grouped = {};
+  
+    attestations.forEach(attestation => {
+      const date = format(new Date(Number(attestation.syncAt)), 'PP'); // Format date as a headline
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(attestation);
+    });
+  
+    return grouped;
+};
 
-// Line Component similar to the one in Logs page
-const Line = ({
-  icon,
-  text,
-  attestationId,
-  time,
-  link,
-  color = "neon.400",
-  iconColor = "neon.400",
-}) => {
+// Line component for individual attestations
+const Line = ({ icon, text, link, color = "neon.400", iconColor = "neon.400" }) => {
   return (
     <ListItem w="full" py="6px" borderBottom="solid 1px" mt="6px" fontSize={["12px", "16px"]}>
-      <HStack w="full">
+      <HStack w="full" justify="space-between">
         <HStack flex="4" color={color}>
           <Box w="30px">{icon && <Box as={icon} boxSize="24px" color={iconColor} />}</Box>
           <Text>{text}</Text>
         </HStack>
-
-        <Text flex="3" textAlign="right" color="gray.500" fontSize="sm">
-          {format(new Date(Number(time)), 'PPpp')}
-        </Text>
-
         <ChakraLink href={link} isExternal color="blue.500" textDecoration="underline">
           View
         </ChakraLink>
@@ -54,6 +53,7 @@ const Line = ({
   );
 };
 
+// Fetch attestations from the IndexService API
 const getAttestationListFromIndexService = async () => {
   const indexService = new IndexService("testnet");
   const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0xa9", page: 1 });
@@ -63,6 +63,8 @@ const getAttestationListFromIndexService = async () => {
 export default function ProfilePage({ params }) {
   const { walletAddress } = params;
   const [attestations, setAttestations] = useState([]);
+  const [attestedCount, setAttestedCount] = useState(0); // For counting attestations created
+  const [receivedCount, setReceivedCount] = useState(0); // For counting attestations received
   const router = useRouter();
   const listRef = useRef(null);
 
@@ -74,7 +76,7 @@ export default function ProfilePage({ params }) {
       try {
         const data = await getAttestationListFromIndexService();
 
-        // Filter to show all attestations where the wallet is either the attester or in recipients
+        // Filter attestations where the wallet is either the attester or in recipients
         const filteredData = data.filter(attestation =>
           attestation.attester.toLowerCase() === walletAddress.toLowerCase() ||
           attestation.recipients.some(recipient => recipient.toLowerCase() === walletAddress.toLowerCase())
@@ -84,6 +86,17 @@ export default function ProfilePage({ params }) {
         filteredData.sort((a, b) => Number(b.syncAt) - Number(a.syncAt));
 
         setAttestations(filteredData);
+
+        // Calculate attestations made and received
+        const attested = filteredData.filter(
+          attestation => attestation.attester.toLowerCase() === walletAddress.toLowerCase()
+        );
+        const received = filteredData.filter(
+          attestation => attestation.recipients.some(recipient => recipient.toLowerCase() === walletAddress.toLowerCase())
+        );
+
+        setAttestedCount(attested.length);
+        setReceivedCount(received.length);
       } catch (error) {
         console.error("Error fetching attestations:", error);
       }
@@ -94,7 +107,7 @@ export default function ProfilePage({ params }) {
     }
   }, [walletAddress, isValidAddress]);
 
-  // Scroll to bottom on new attestations
+  // Scroll to the bottom on new attestations
   useEffect(() => {
     if (!listRef.current) return;
     const lastEl = listRef.current.lastElementChild;
@@ -105,9 +118,18 @@ export default function ProfilePage({ params }) {
     notFound();
   }
 
+  const groupedAttestations = groupAttestationsByDate(attestations);
+
   return (
     <Layout
-      CustomLeftPanel={CustomLeftPanel}
+      // Pass the wallet info and attestation counts to CustomLeftPanel
+      CustomLeftPanel={() => (
+        <CustomLeftPanel
+          walletAddress={walletAddress}
+          attestedCount={attestedCount}
+          receivedCount={receivedCount}
+        />
+      )}
       footer={
         <Footer>
           <Button
@@ -121,23 +143,37 @@ export default function ProfilePage({ params }) {
       }
     >
       <VStack w="full" align="start" spacing={4} ref={listRef} p={4}>
-        <Heading size="lg">Wallet Interaction History</Heading>
-        <Text>Wallet Address: {walletAddress}</Text>
+        <Heading size="lg">Interaction History</Heading>
+        {/* <Text>Wallet Address: {walletAddress}</Text> */}
 
         {attestations.length > 0 ? (
           <List w="full">
-            {attestations.map(attestation => {
-              const isAttester = attestation.attester.toLowerCase() === walletAddress.toLowerCase();
-              const attestationMessage = isAttester
-                ? `Attested: ${attestation.attestationId}`
-                : `Received attestation: ${attestation.attestationId}`;
+            {Object.keys(groupedAttestations).map(date => (
+              <VStack key={date} align="start" spacing={2} w="full">
+                {/* Date headline */}
+                <HStack w="full" alignItems="center">
+                  <Box as={Clock} boxSize="24px" color="green.500" />
+                  <Text fontSize="lg" color="green.500" textTransform="uppercase">
+                    {date}
+                  </Text>
+                </HStack>
 
-              return (
-                isAttester
-                  ? renderAttester(attestation, walletAddress)
-                  : renderReceived(attestation, walletAddress)
-              );
-            })}
+                {/* Render events for that date */}
+                {groupedAttestations[date].map((attestation, index) => {
+                  const isAttester = attestation.attester.toLowerCase() === walletAddress.toLowerCase();
+                  return (
+                    <Line
+                      key={`${attestation.id}-${index}`}
+                      icon={isAttester ? DollarBag : Event}
+                      text={isAttester ? `Attested: ${attestation.attestationId}` : `Received attestation: ${attestation.attestationId}`}
+                      link={`https://testnet-scan.sign.global/attestation/${attestation.id}`}
+                      color={isAttester ? "yellow.400" : "blue.400"}
+                      iconColor={isAttester ? "yellow.400" : "blue.400"}
+                    />
+                  );
+                })}
+              </VStack>
+            ))}
           </List>
         ) : (
           <Text>No attestations found for this address.</Text>
@@ -147,46 +183,19 @@ export default function ProfilePage({ params }) {
   );
 }
 
-const CustomLeftPanel = () => {
+// CustomLeftPanel with Profile Component
+const CustomLeftPanel = ({ walletAddress, attestedCount, receivedCount }) => {
   return (
     <VStack w="full" h="full" justifyContent="center" alignItems="center" flex="1">
       <Heading fontSize={["36px", "48px"]} fontWeight="400" mb={["0px", "20px"]}>
-        Wallet Profile
+        Profile
       </Heading>
-      {/* You can add a Profile component or any other relevant component here */}
-      {/* Example: <Profile /> */}
+      {/* Profile component showing wallet address and attestation stats */}
+      <ProfileButton
+        walletAddress={walletAddress}
+        attestedCount={attestedCount}
+        receivedCount={receivedCount}
+      />
     </VStack>
-  );
-};
-
-// Render function for attestations where the wallet is the attester
-const renderAttester = (attestation, walletAddress) => {
-  return (
-    <Line
-      key={attestation.id}
-      icon={DollarBag} // Replace with actual icon if available
-      text={`Attested: ${attestation.attestationId}`}
-      attestationId={attestation.attestationId}
-      time={attestation.syncAt}
-      link={`https://testnet-scan.sign.global/attestation/${attestation.id}`}
-      color="green.400" // Similar to WorldEvents.Bought
-      iconColor="green.400"
-    />
-  );
-};
-
-// Render function for attestations where the wallet is a recipient
-const renderReceived = (attestation, walletAddress) => {
-  return (
-    <Line
-      key={attestation.id}
-      icon={Event} // Replace with actual icon if available
-      text={`Received attestation: ${attestation.attestationId}`}
-      attestationId={attestation.attestationId}
-      time={attestation.syncAt}
-      link={`https://testnet-scan.sign.global/attestation/${attestation.id}`}
-      color="blue.400" // Similar to WorldEvents.BoughtItem
-      iconColor="blue.400"
-    />
   );
 };
