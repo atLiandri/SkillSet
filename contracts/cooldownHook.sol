@@ -1,31 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+//TODO implement setcooldown
+
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ISPHook } from "@ethsign/sign-protocol-evm/src/interfaces/ISPHook.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract cooldownManager is Ownable {
+    
         constructor() Ownable(_msgSender()) { }
 
         error tooSoon(address attester, uint256 remainingCooldown);
 
-        mapping(address=>uint256) lastInteracted;
+        mapping(address=>uint256) public lastInteracted;
+        uint256 public cooldown = 0;
+
+        function setCooldown(uint256 _cooldown) external onlyOwner{
+            cooldown = _cooldown;
+        }
 
         function _requireCooldown(address attester) internal {
             unchecked{ // "if" ensures "greater then" and block.timestamp always greater than one day
-                if (lastInteracted[attester]>block.timestamp-86400){ //one day in seconds
+                if (lastInteracted[attester]>block.timestamp-cooldown){ //one day in seconds
                     revert tooSoon({
                         attester: attester,
-                        remainingCooldown: lastInteracted[attester]-block.timestamp+86400
+                        remainingCooldown: lastInteracted[attester]-block.timestamp+cooldown
                         });
                 }
-                lastInteracted[attester] = block.timestamp;
             }
+            lastInteracted[attester] = block.timestamp;
         }
 }
 
 contract cooldownHook is ISPHook, cooldownManager{
+
+    function viewCooldown() external view returns (uint256){
+        return cooldown;
+    }
+
+    function viewLastInteractionTime(address user) external view returns (uint256){
+        return lastInteracted[user];
+    }
+
     function didReceiveAttestation(
         address attester,
         uint64 ,
