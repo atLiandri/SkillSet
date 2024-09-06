@@ -3,17 +3,14 @@ import { useEffect, useState } from "react";
 import { IsMobile, formatCashHeader } from "@/utils/ui";
 import { useRouter } from "next/navigation";
 import { initSoundStore } from "@/hooks/sound";
-// import HeaderButton from "@/components/HeaderButton";
-// import PixelatedBorderImage from "./icons/PixelatedBorderImage";
-// import colors from "@/theme/colors";
-// import { headerStyles, headerButtonStyles } from "@/theme/styles";
+import { ProfileLink } from "./ProfileButton";
+import { useAccount, useEnsName } from 'wagmi';
 
 export const Header = ({ back }) => {
   const router = useRouter();
-  // const { gameId } = router.query;
   const [inventory, setInventory] = useState(0);
-
-  const isMobile = IsMobile();
+  const { address } = useAccount(); // Fetch the connected account's address
+  const isMobile = IsMobile(); // Check if the device is mobile
 
   useEffect(() => {
     const init = async () => {
@@ -35,10 +32,8 @@ export const Header = ({ back }) => {
       <HStack flex="1" justify={["left", "right"]}></HStack>
       <HStack flex="1" justify="right">
         {/* Right section with actions/buttons */}
-        {!isMobile && (
-          <>
-            {/* Add any components you want here */}
-          </>
+        {!isMobile && address && (
+          <ProfileLink/> // Show ProfileLink if not mobile and account is connected
         )}
         {isMobile && (
           <>

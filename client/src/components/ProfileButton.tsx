@@ -13,6 +13,9 @@ import { Calendar, Cigarette } from "./icons/archive";
 import { useToast } from "../hooks/toast";
 import { useAccount, useEnsName } from 'wagmi';
 import { mainnet } from 'wagmi/chains'
+import {  headerButtonStyles } from "@/theme/styles";
+import { useRouter, usePathname  } from "next/navigation";
+import { useState, useEffect } from "react";
 
 // Helper function to format the wallet address
 const formatWalletAddress = (walletAddress) => {
@@ -143,3 +146,30 @@ export const ProfileButton = ({ walletAddress, attestedCount, receivedCount, ...
     </VStack>
   );
 };
+
+
+export const ProfileLink = () => {
+  const router = useRouter();
+  const { address } = useAccount();
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname()
+
+  const onClick = () => {
+    if (pathname === `/profile/${address}`) {
+      router.back();
+    } else {
+      router.push(`/profile/${address}`);
+    }
+  };
+
+  if (!address) return null;
+
+  return (
+    <>
+      <Button as={Box} cursor="pointer" h={["40px", "48px"]} {...headerButtonStyles} onClick={onClick}>
+        <Avatar  color={ "green"}  hasCrown={ false} />
+      </Button>
+    </>
+  );
+};
+
