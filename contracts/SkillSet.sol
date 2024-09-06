@@ -5,11 +5,10 @@ pragma solidity ^0.8.20;
 /// @author Liandri
 /// @notice Tags not yet implemented, for the moment only registering certificates is possible, only via proposal
 
+// currently deployed on sepolia
+
 // TODO 
-// implement invalidate proposal, implement create certificate (without need to confirm)
-// extend the view functions to all variables
-// add tags to the certificate
-// optional: implement ERC20 request for certificate
+// add tags to the certificate -- create a custom schema
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ISP } from "@ethsign/sign-protocol-evm/src/interfaces/ISP.sol";
@@ -18,10 +17,11 @@ import { DataLocation } from "@ethsign/sign-protocol-evm/src/models/DataLocation
 import "hardhat/console.sol";
 
 contract SkillSet is Ownable {
-    ISP public spInstance;
-    uint64 public schemaId;
+    ISP public spInstance = ISP(0x878c92FD89d8E0B93Dc0a3c907A2adc7577e39c5);
+    uint64 public schemaId = 0x10f;
 
     struct SkillProposal {
+        address receiver;
         string info;
         uint256 level;
         uint256 maximumLevel;
@@ -41,10 +41,10 @@ contract SkillSet is Ownable {
     mapping(uint256 => string[]) public attestationIdToTag; // not yet used
 
 
-    // Mapping from proposer to sent proposals
-    mapping(address => SkillProposal[]) private proposerToSentProposals;
-    // Mapping from proposer to an array of bookmarks that allow to retrieve information from the map above
-    mapping(address => ProposalBookmark[]) private proposeeToReceivedProposalIndices;
+    // Mapping from address to sent proposals
+    mapping(address => SkillProposal[]) private addressToSentProposals;
+    // Mapping from address to an array of bookmarks that allow to retrieve information from the map above
+    mapping(address => ProposalBookmark[]) private addressToReceivedProposalIndices;
 
 
     event CertificationRegistered(address addressIssuer, address addressReceiver, uint256 issuerCertificateIndex, uint256 receiverCertificateIndex,  uint64 attestationId);
@@ -53,90 +53,112 @@ contract SkillSet is Ownable {
     constructor() Ownable(_msgSender()) { }
 
     function setSPInstance(address instance) external onlyOwner {
-        spInstance = ISP(instance); // to be set to 0x878c92FD89d8E0B93Dc0a3c907A2adc7577e39c5 
+        spInstance = ISP(instance);  
     }
 
     function setSchemaID(uint64 schemaId_) external onlyOwner {
-        schemaId = schemaId_;      // to be set to 0xa8 (skill schema) https://testnet-scan.sign.global/schema/onchain_evm_11155111_0xa8
+        schemaId = schemaId_; 
     }
 
     function submitCertificateProposal(address addressReceiver,uint256 _level, uint256 _maximumLevel, string memory infoA) external {
+        // TODO add require addresses are different
         // sumbits a skill proposal that can later be accepted by receiver address
         address addressIssuer = _msgSender();
-        SkillProposal memory _proposal = SkillProposal({info: infoA,level:_level,maximumLevel:_maximumLevel, isValid:true});
-        proposerToSentProposals[addressIssuer].push(_proposal);
-        uint256 proposalIndex = proposerToSentProposals[addressIssuer].length-1;
+        SkillProposal memory _proposal = SkillProposal({receiver: addressReceiver, info: infoA,level:_level,maximumLevel:_maximumLevel, isValid:true});
+        addressToSentProposals[addressIssuer].push(_proposal);
+        uint256 proposalIndex = addressToSentProposals[addressIssuer].length-1;
         ProposalBookmark memory _proposalBookmark = ProposalBookmark({
             index: proposalIndex,
             issuerAddress: addressIssuer});
-        proposeeToReceivedProposalIndices[addressReceiver].push(_proposalBookmark); 
+        addressToReceivedProposalIndices[addressReceiver].push(_proposalBookmark); 
 
         emit ProposalSubmitted( addressIssuer,
                                 addressReceiver,
                                 proposalIndex,
-                                proposeeToReceivedProposalIndices[addressReceiver].length-1);
+                                addressToReceivedProposalIndices[addressReceiver].length-1);
     }
 
+    function revokeCertificateProposal(uint256 index) external {
+        address addressIssuer = _msgSender();
+        addressToSentProposals[addressIssuer][index].isValid = false;
+    }
 
-    function getAllProposalsSentBy(address proposer) external view returns (string[] memory) {
-        // get the array of the info attached to all proposals sent by proposer
-        uint256 length = proposerToSentProposals[proposer].length;
+    function getAllProposalsSentBy(address proposer) external view returns (address[] memory, string[] memory, uint256[] memory, uint256[] memory, bool[] memory) {
+        // get the array of all info attached to all proposals sent by proposer
+        uint256 length = addressToSentProposals[proposer].length;
         string[] memory infos = new string[](length);
+        address[] memory receiverAddresses = new address[](length);
+        uint256[] memory levels = new uint256[] (length);
+        uint256[] memory maximumLevels = new uint256[] (length);
+        bool[] memory isValids = new bool[] (length);
 
         for (uint256 i = 0; i < length; ++i) {
-            infos[i] = proposerToSentProposals[proposer][i].info;
+            receiverAddresses[i] = addressToSentProposals[proposer][i].receiver;
+            infos[i] = addressToSentProposals[proposer][i].info;
+            levels[i] = addressToSentProposals[proposer][i].level;
+            maximumLevels[i] = addressToSentProposals[proposer][i].maximumLevel;
+            isValids[i] = addressToSentProposals[proposer][i].isValid;
         }
-
-        return infos;
+        return (receiverAddresses, infos, levels, maximumLevels,isValids);
     }
 
-    function getProposalsReceivedBy(address proposee) external view returns (address[] memory, uint256[] memory) {
-        // get array of all the issuers that have sent a proposal to proposee, together with
-        // an index array that allows to retrieve the right proposal from 
+    function getProposalsReceivedBy(address receiver) external view returns (address[] memory, uint256[] memory) {
+        // get array of all the issuers that have sent a proposal to the receiver, together with
+        // an index array that, together with the address allows to retrieve the right proposal from 
         // the output of getAllProposalsSentBy
-        uint256 length = proposeeToReceivedProposalIndices[proposee].length;
+        uint256 length = addressToReceivedProposalIndices[receiver].length;
         uint256[] memory indices = new uint256[](length);
         address[] memory issuers = new address[](length);
         for (uint256 i = 0; i < length; ++i) {
-            indices[i] = proposeeToReceivedProposalIndices[proposee][i].index;
-            issuers[i] = proposeeToReceivedProposalIndices[proposee][i].issuerAddress;
+            indices[i] = addressToReceivedProposalIndices[receiver][i].index;
+            issuers[i] = addressToReceivedProposalIndices[receiver][i].issuerAddress;
         }
 
         return (issuers, indices);
     }
 
+    function getCertificatesIssuedBy(address issuer) external view returns (uint256[] memory) {
+        return addressToIssuedCertificates[issuer];
+    }
 
-    function confirmProposal(uint256 indexProposee) external returns (uint256) {
+    function getCertificatesReceivedBy(address receiver) external view returns (uint256[] memory) {
+        return addressToReceivedCertificates[receiver];
+    }
+
+    function confirmProposal(uint256 indexReceiver) external returns (uint256) {
         // transforms a proposal into a certificate. Only requires an index that selects
         // among the proposals received by msgSender, and then looks for the full proposal
-        // in proposerToSentProposals
+        // in addressToSentProposals
         address addressReceiver = _msgSender();
 
-        uint256 index = proposeeToReceivedProposalIndices[addressReceiver][indexProposee].index;
-        address addressIssuer = proposeeToReceivedProposalIndices[addressReceiver][indexProposee].issuerAddress;
+        uint256 index = addressToReceivedProposalIndices[addressReceiver][indexReceiver].index;
+        address addressIssuer = addressToReceivedProposalIndices[addressReceiver][indexReceiver].issuerAddress;
 
-        SkillProposal memory _proposal = proposerToSentProposals[addressIssuer][index];
+        SkillProposal memory _proposal = addressToSentProposals[addressIssuer][index];
 
         require(_proposal.isValid, "SkillProposal not found at the receiver, or invalid");
 
         bytes memory data = abi.encode(addressIssuer, addressReceiver,_proposal.level, _proposal.maximumLevel, _proposal.info);
 
-        bytes[] memory recipients = new bytes[](2);
-        recipients[0] = abi.encode(addressIssuer);
-        recipients[1] = abi.encode(addressReceiver);
+        bytes[] memory recipients = new bytes[](1);
+        recipients[0] = abi.encode(addressReceiver);
         Attestation memory a = Attestation({
             schemaId: schemaId,
             linkedAttestationId: 0,
             attestTimestamp: 0,
             revokeTimestamp: 0,
-            attester: address(this),
+            attester: address(this), // this contract instance is the attester
             validUntil: 0,
             dataLocation: DataLocation.ONCHAIN,
             revoked: false,
             recipients: recipients,
             data: data
         });
-        uint64 attestationId = spInstance.attest(a, "", "", "");
+        // addressReceiver is passed as extraData for the cooldownHook
+        uint64 attestationId = spInstance.attest(a, "", "", abi.encode(addressReceiver));
+
+        // proposal is no longer valid
+        addressToSentProposals[addressIssuer][index].isValid = false;
 
         addressToReceivedCertificates[addressReceiver].push(attestationId);
         addressToIssuedCertificates[addressIssuer].push(attestationId);

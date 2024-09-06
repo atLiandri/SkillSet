@@ -11,47 +11,48 @@ contract cooldownManager is Ownable {
     
         constructor() Ownable(_msgSender()) { }
 
-        error tooSoon(address attester, uint256 remainingCooldown);
+        error tooSoon(bytes encodedReceiver, uint256 remainingCooldown);
 
-        mapping(address=>uint256) public lastInteracted;
+        mapping(bytes encodedReceiver =>uint256 lastInteractionTime) public lastInteracted;
         uint256 public cooldown = 0;
 
         function setCooldown(uint256 _cooldown) external onlyOwner{
             cooldown = _cooldown;
         }
 
-        function _requireCooldown(address attester) internal {
+        function _requireCooldown(bytes calldata encodedReceiver) internal {
             unchecked{ // "if" ensures "greater then" and block.timestamp always greater than one day
-                if (lastInteracted[attester]>block.timestamp-cooldown){ //one day in seconds
+                if (lastInteracted[encodedReceiver]>block.timestamp-cooldown){ //one day in seconds
                     revert tooSoon({
-                        attester: attester,
-                        remainingCooldown: lastInteracted[attester]-block.timestamp+cooldown
+                        encodedReceiver: encodedReceiver,
+                        remainingCooldown: lastInteracted[encodedReceiver]-block.timestamp+cooldown
                         });
                 }
             }
-            lastInteracted[attester] = block.timestamp;
+            lastInteracted[encodedReceiver] = block.timestamp;
         }
+
+        function viewCooldown() external view returns (uint256){
+            return cooldown;
+        }
+
+        function viewLastInteractionTime(address user) external view returns (uint256){
+            return lastInteracted[abi.encode(user)];
+        }
+
 }
 
 contract cooldownHook is ISPHook, cooldownManager{
 
-    function viewCooldown() external view returns (uint256){
-        return cooldown;
-    }
-
-    function viewLastInteractionTime(address user) external view returns (uint256){
-        return lastInteracted[user];
-    }
-
     function didReceiveAttestation(
-        address attester,
+        address ,
         uint64 ,
         uint64 ,
-        bytes calldata 
+        bytes calldata encodedReceiver
     )
         external
         payable {
-            _requireCooldown(attester);
+            _requireCooldown(encodedReceiver);
         }
 
     // for the moment we don't use remaining functions 
