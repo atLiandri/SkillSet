@@ -72,7 +72,7 @@ const Line = ({ icon, text, link, color = "neon.400", iconColor = "neon.400" }) 
 // Fetch attestations from the IndexService API
 const getAttestationListFromIndexService = async () => {
   const indexService = new IndexService("testnet");
-  const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0xa9", page: 1 });
+  const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0xfc", page: 1 });
   return res.rows;
 };
 

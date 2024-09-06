@@ -18,7 +18,7 @@ import { formatCash } from "@/utils/ui";
 
 const getAttestationListFromIndexService = async () => {
   const indexService = new IndexService("testnet");
-  const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0xa9", page: 1 });
+  const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0xfc", page: 1 });
   return res.rows;
 };
 
@@ -97,7 +97,7 @@ const Leaderboard = ({ nameEntry, ...props }) => {
         <UnorderedList boxSize="full" variant="dotted" h="auto" ref={listRef}>
           {visibleScores && visibleScores.length > 0 ? (
             visibleScores.map((score, index) => {
-              const playerName = score.attester.slice(0, 10); // First 10 letters of attester
+              const playerName = score.from.slice(0, 10); // First 10 letters of attester
               const money = score.attestationId; // Use attestationId as money
               const link = `https://testnet-scan.sign.global/attestation/${score.id}`; // Link to attestation
 
