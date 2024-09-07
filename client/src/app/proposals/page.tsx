@@ -9,7 +9,7 @@ import { VStack, HStack, Text, Card, Link as ChakraLink } from "@chakra-ui/react
 import { useRouter } from "next/navigation";
 import { useState, useEffect  } from "react";
 import { useToast } from "../../hooks/toast";
-import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useWaitForTransactionReceipt, useWriteContract} from 'wagmi';
 import { abi } from "@/utils/abi";
 
 // Simple regex for Ethereum address validation
