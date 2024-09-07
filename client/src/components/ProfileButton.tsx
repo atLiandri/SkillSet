@@ -109,7 +109,7 @@ export const ProfileButton = ({ walletAddress, attestedCount, receivedCount, ...
                   variant="pixelated"
                   w="full"
                   onClick={() => {
-                    window.location.href = "/create";  // Redirect to the create page
+                    window.location.href = "/proposals";  // Redirect to the create page
                   }}
                 >
                   Create
