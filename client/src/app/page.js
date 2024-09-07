@@ -54,7 +54,7 @@ export default function Home() {
                   {/* <Alert /> */}
                   <Text align="center">Under Construction</Text>
                 </HStack>
-                <Text align="center">Get ready hustlers... Season III starts in November</Text>
+                <Text align="center"></Text>
               </VStack>
             ) : (
               <>

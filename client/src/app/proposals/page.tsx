@@ -122,9 +122,9 @@ const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactio
   return (
     <Layout
       leftPanelProps={{
-        prefixTitle: "Creat a",
+        prefixTitle: "Create a",
         title: "New Certificate",
-        imageSrc: "/images/will-smith-with-attitude.png",
+        imageSrc: "/images/image3.png",
       }}
       footer={
         <Footer>
