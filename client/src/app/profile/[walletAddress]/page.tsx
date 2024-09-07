@@ -121,7 +121,7 @@ export default function ProfilePage({ params }) {
 
         // Filter attestations where the wallet is either the attester or in recipients
         const filteredData = data.filter(attestation =>
-          attestation.attester.toLowerCase() === walletAddress.toLowerCase() ||
+          attestation.from.toLowerCase() === walletAddress.toLowerCase() ||
           attestation.recipients.some(recipient => recipient.toLowerCase() === walletAddress.toLowerCase())
         );
 
@@ -132,7 +132,7 @@ export default function ProfilePage({ params }) {
 
         // Calculate attestations made and received
         const attested = filteredData.filter(
-          attestation => attestation.attester.toLowerCase() === walletAddress.toLowerCase()
+          attestation => attestation.from.toLowerCase() === walletAddress.toLowerCase()
         );
         const received = filteredData.filter(
           attestation => attestation.recipients.some(recipient => recipient.toLowerCase() === walletAddress.toLowerCase())
@@ -214,7 +214,7 @@ export default function ProfilePage({ params }) {
 
                 {/* Render events for that date */}
                 {groupedAttestations[date].map((attestation, index) => {
-                  const isAttester = attestation.attester.toLowerCase() === walletAddress.toLowerCase();
+                  const isAttester = attestation.from.toLowerCase() === walletAddress.toLowerCase();
                   return (
                     <Line
                       key={`${attestation.id}-${index}`}
