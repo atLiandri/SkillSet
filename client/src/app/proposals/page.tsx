@@ -128,7 +128,7 @@ const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactio
       }}
       footer={
         <Footer>
-          <Button w={["full", "auto"]} px={["auto", "20px"]} onClick={handleSubmit} isLoading={isPending}>
+          <Button w={["full", "auto"]} px={["auto", "20px"]} onClick={handleSubmit} isLoading={isPending || (!contractError && isConfirming) } >
             Submit
           </Button>
         </Footer>

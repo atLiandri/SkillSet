@@ -104,8 +104,8 @@ export default function New() {
               <Button
                 w="full"
                 px={["auto", "20px"]}
-                isLoading={isPending}
                 onClick={handleClaim}  
+                isLoading={isPending || (!contractError && isConfirming)}
                 isDisabled={isPending || (!contractError && isConfirmed)} 
               >
                 {isPending ? 'Processing...' : 'Claim'}

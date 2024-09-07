@@ -23,6 +23,8 @@ import { Bag, DollarBag, Event, Clock } from "../../../components/icons";
 import { ProfileButton } from "../../../components/ProfileButton";  // Import Profile component
 import { useAccount } from 'wagmi'; // Import useAccount for connected wallet
 import { useToast } from "@/hooks/toast";
+import { decodeAttestationData } from '@/utils/decoders'; 
+
 // Group attestations by date
 const groupAttestationsByDate = (attestations) => {
     const grouped = {};
@@ -109,7 +111,7 @@ export default function ProfilePage({ params }) {
     }
   };
 
-  // Filter attestations based on search query
+  // Filter attestations based on search query1
   const filteredAttestations = attestations.filter(attestation =>
     attestation.attestationId.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -118,11 +120,15 @@ export default function ProfilePage({ params }) {
     const fetchData = async () => {
       try {
         const data = await getAttestationListFromIndexService();
+        const decodedData = data.map(attestation => ({
+          ...attestation,
+          decoded: decodeAttestationData(attestation.data)
+        }));
 
         // Filter attestations where the wallet is either the attester or in recipients
-        const filteredData = data.filter(attestation =>
-          attestation.from.toLowerCase() === walletAddress.toLowerCase() ||
-          attestation.recipients.some(recipient => recipient.toLowerCase() === walletAddress.toLowerCase())
+        const filteredData = decodedData.filter(attestation =>
+          attestation.decoded.addressIssuer.toLowerCase() === walletAddress.toLowerCase() ||
+          attestation.decoded.addressReceiver.toLowerCase() === walletAddress.toLowerCase()
         );
 
         // Sort by syncAt descending
@@ -132,10 +138,10 @@ export default function ProfilePage({ params }) {
 
         // Calculate attestations made and received
         const attested = filteredData.filter(
-          attestation => attestation.from.toLowerCase() === walletAddress.toLowerCase()
+          attestation => attestation.decoded.addressIssuer.toLowerCase() === walletAddress.toLowerCase()
         );
         const received = filteredData.filter(
-          attestation => attestation.recipients.some(recipient => recipient.toLowerCase() === walletAddress.toLowerCase())
+          attestation => attestation.decoded.addressReceiver.toLowerCase() === walletAddress.toLowerCase()
         );
 
         setAttestedCount(attested.length);
@@ -178,9 +184,9 @@ export default function ProfilePage({ params }) {
           <Button
             w={["full", "auto"]}
             px={["auto", "20px"]}
-            onClick={() => router.back()}
+            onClick={() => router.push("/")}
           >
-            Back
+            Home
           </Button>
         </Footer>
       }
@@ -219,7 +225,7 @@ export default function ProfilePage({ params }) {
                     <Line
                       key={`${attestation.id}-${index}`}
                       icon={isAttester ? DollarBag : Event}
-                      text={isAttester ? `Attested: ${attestation.attestationId}` : `Received attestation: ${attestation.attestationId}`}
+                      text={isAttester ? `Received attestation: ${attestation.decoded.info}` : `Attested: ${attestation.decoded.info}`}
                       link={`https://testnet-scan.sign.global/attestation/${attestation.id}`}
                       color={isAttester ? "yellow.400" : "blue.400"}
                       iconColor={isAttester ? "yellow.400" : "blue.400"}
