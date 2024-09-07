@@ -14,11 +14,11 @@ import { IndexService } from '@ethsign/sp-sdk';
 import React, { useState, useEffect, useRef } from "react";
 import colors from "@/theme/colors";
 import { Arrow, Skull } from "./icons";
-import { decodeAttestationData } from '@/utils/decoders'; // Adjust this path as needed
+import { decodeAttestationData } from '@/utils/decoders'; 
 
 const getAttestationListFromIndexService = async () => {
   const indexService = new IndexService("testnet");
-  const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0xfc", page: 1 });
+  const res = await indexService.queryAttestationList({ schemaId: "onchain_evm_11155111_0x10f", page: 1 });
   return res.rows;
 };
 
