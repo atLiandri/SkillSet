@@ -14,7 +14,7 @@ import { IndexService } from '@ethsign/sp-sdk';
 import React, { useState, useEffect, useRef } from "react";
 import colors from "@/theme/colors";
 import { Arrow, Skull } from "./icons";
-import { formatCash } from "@/utils/ui";
+import { decodeAttestationData } from '@/utils/decoders'; // Adjust this path as needed
 
 const getAttestationListFromIndexService = async () => {
   const indexService = new IndexService("testnet");
@@ -36,8 +36,14 @@ const Leaderboard = ({ nameEntry, ...props }) => {
   useEffect(() => {
     const fetchData = async () => {
       const attestationData = await getAttestationListFromIndexService();
-      setScores(attestationData);
-      setVisibleScores(attestationData.slice(0, ITEMS_PER_PAGE)); // Initially load first 5
+      // Decoding each attestation data using the helper function
+      const decodedData = attestationData.map(attestation => ({
+        ...attestation,
+        decoded: decodeAttestationData(attestation.data)
+      }));
+      console.log("decodedDatadecoded",decodedData )
+      setScores(decodedData);
+      setVisibleScores(decodedData.slice(0, ITEMS_PER_PAGE)); // Initially load first 5
     };
     fetchData();
   }, []);
@@ -98,7 +104,7 @@ const Leaderboard = ({ nameEntry, ...props }) => {
           {visibleScores && visibleScores.length > 0 ? (
             visibleScores.map((score, index) => {
               const playerName = score.from.slice(0, 10); // First 10 letters of attester
-              const money = score.attestationId; // Use attestationId as money
+              const money = score.decoded.info; // Using decoded addressIssuer
               const link = `https://testnet-scan.sign.global/attestation/${score.id}`; // Link to attestation
 
               const color = colors.neon["200"].toString();
