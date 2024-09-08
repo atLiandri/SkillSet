@@ -21,6 +21,11 @@
   ],
   "license": "MIT AND Apache-2.0",
   "dependencies": {
+    "@chakra-ui/anatomy": "^2.1.1",
+    "@chakra-ui/react": "^2.8.1",
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@ethsign/sp-sdk": "^0.7.3",
     "@fleekhq/fleek-storage-js": "^1.0.24",
     "@rainbow-me/rainbowkit": "^2.0.4",
     "@tableland/sdk": "^6.0.0",
@@ -29,23 +34,33 @@
     "autoprefixer": "^10.4.19",
     "axios": "^1.6.8",
     "formidable": "^3.5.1",
+    "framer-motion": "^10.5.0",
+    "howler": "^2.2.3",
     "mocha": "^10.4.0",
     "next": "^14.1.4",
     "postcss": "^8.4.38",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwindcss": "^3.4.3",
+    "use-caret-position": "^0.0.2",
     "viem": "^2.9.5",
-    "wagmi": "^2.5.13"
+    "wagmi": "^2.5.13",
+    "zustand": "^4.3.7"
   },
   "devDependencies": {
     "@tableland/local": "^2.4.1",
+    "@types/howler": "^2.2.7",
+    "@types/js-cookie": "^3.0.3",
+    "@types/node": "18.15.3",
+    "@types/react": "18.0.28",
+    "@types/react-dom": "18.0.11",
     "encoding": "^0.1.13",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.1.4",
     "eslint-config-prettier": "^9.1.0",
     "lokijs": "^1.5.12",
     "pino-pretty": "^11.0.0",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "typescript": "5.2.2"
   }
 }

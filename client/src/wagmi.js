@@ -5,12 +5,12 @@ import { http } from "viem";
 
 
 const chains = [
-  chain.chiliz,
+
 
   ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === "true"
     ? [
         chain.sepolia,
-        chain.spicy,
+
       ]
     : []),
 ];
