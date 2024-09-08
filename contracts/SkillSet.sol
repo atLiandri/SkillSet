@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// @title A skill certification contract
+/// @title SkillSet certification contract
 /// @author Liandri
-/// @notice Tags not yet implemented, for the moment only registering certificates is possible, only via proposal
 
 // currently deployed on sepolia
 
